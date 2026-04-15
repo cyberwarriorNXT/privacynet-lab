@@ -4,28 +4,27 @@ PrivacyNet Lab - node.py
 Phase 1: Two-node encrypted communication.
 Node A encrypts a message and sends it to Node B.
 Node B decrypts and prints what it can see.
+
+Educational use only — runs entirely on localhost.
 """
 
-import socket    """ It is a way to create network connection in python. It works like 
-                       a telephone; one side calls and other side picks up """
+import socket  #It is a way to create network connection in python. It works like 
+                       #a telephone; one side calls and other side picks up 
 
-import threading       """ Normally python works one thing at a time top to bottom but here
-                            when node A sends node b needs to listen it at the same time
-                            so threading is used to make both work at the same time creating two hands
-                             """
+import threading   # Normally python works one thing at a time top to bottom but here
+                            #when node A sends node b needs to listen it at the same time
+                            #so threading is used to make both work at the same time creating two hands
 
-import os              """  here is it only used for os.urandom(16) to create a random 16 bytes using the os randomness function"""
+import os            #here is it only used for os.urandom(16) to create a random 16 bytes using the os randomness function
 
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad, unpad  # AES -> Advance Encrption Standard. Is used as the encryption algorithm in this project
+                                      #AES requires the data to be in the chunks of 16 bytes. for expample: If the message is 37 bytes
+                                       #the padding (pad) fills it to 48 bits (3 chunks of 16 bytes) and while unpadding (unpad) it will remove the 
+                                       #unnecessery bytes afetr decryption.
 
-from Crypto.Cipher import AES    
-from Crypto.Util.Padding import pad, unpad  """ AES -> Advance Encrption Standard. Is used as the encryption algorithm in this project
-                                      AES requires the data to be in the chunks of 16 bytes. for expample: If the message is 37 bytes
-                                       the padding (pad) fills it to 48 bits (3 chunks of 16 bytes) and while unpadding (unpad) it will remove the 
-                                       unnecessery bytes afetr decryption.
-                                       """
-import hashlib  """ used to turn plain password to 32 bytes; the size reuires for the key of AES-256
-                    Secure Hash Algorithm - SHA-256 is used which provides excatly 32 bytes regradless the input lenght
-                    """
+import hashlib   #used to turn plain password to 32 bytes; the size requires for the key of AES-256
+                    #Secure Hash Algorithm - SHA-256 is used which provides excatly 32 bytes regradless the input lenght
 
 
 # ── Config ───────────────────────────────────────────────────────────────────
@@ -34,16 +33,14 @@ NODE_B_PORT = 5002
 HOST        = "127.0.0.1"
 
 # Shared key (in Phase 2 this will be exchanged via Diffie-Hellman)
-# For now both nodes know the same key — keeping it as simple as possible
+# For now both nodes know the same key — keep it simple
 RAW_KEY = "privacynet-phase1-key"
 KEY     = hashlib.sha256(RAW_KEY.encode()).digest()  # 32 bytes = AES-256
 
 
 # ── Encryption helpers ───────────────────────────────────────────────────────
 def encrypt(message: str, key: bytes) -> bytes:
-  
-       """ <<< Encrypt a message using AES-256 CBC mode. >>>"""
-  
+    """Encrypt a message using AES-256 CBC mode."""
     iv     = os.urandom(16)                          # random initialisation vector
     cipher = AES.new(key, AES.MODE_CBC, iv)
     ct     = cipher.encrypt(pad(message.encode(), AES.block_size))
